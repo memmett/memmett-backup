@@ -1,0 +1,15 @@
+
+$dest = '/ebackup/boreal';
+
+# for /home/adawson
+@backup = ("Documents", "Dropbox", "Music", "Pictures");
+@backup = map { "/home/adawson/" . $_ } @backup;
+
+# for /home/memmett
+push @backup, "/home/memmett/projects";
+
+# the /backup drive
+push @backup, ('/backup/boreal', '/backup/sputnik');
+
+
+ 
