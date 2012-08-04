@@ -1,0 +1,61 @@
+#!/usr/bin/perl
+#
+# This script takes backups/snapshots of your working directories and
+# stores them on a remote host.
+#
+
+use POSIX qw/strftime/;
+
+#### configuration
+
+$localhost = `hostname`; chomp $localhost;
+
+$verbose = 0;
+$dry_run = 0;
+
+$remote    = "localhost";	         # remote host
+$user      = "memmett";		         # remote user
+$dest      = "/backup/$localhost";	 # destination on remote host
+@backup    = ();			 # local directories to backup
+
+do "backup-$localhost" or die;
+
+#### run
+
+if ($host != "localhost") {
+    $remote = "ssh ${user}\@${host} ";
+} else {
+    $remote = "";
+}
+
+$now = strftime("%Y-%m-%d-%H%M", localtime);
+
+# cycle through src's and rsync
+foreach $src (@backup) {
+
+    # make directory
+    system("$remote mkdir -p $dest/$src");
+
+    # get last backup
+    open(BACKUPS, "$remote ls $dest/$src |") or die;
+    @backups = sort <BACKUPS>;
+    close(BACKUPS);
+
+    $last = pop(@backups); chomp $last;
+
+    # build rysnc command
+    if ($remote) {
+	@rsync = ("rsync", "-au", "--link-dest=../$last", "$src/", "${user}\@${host}:$dest/$src/$now/");
+    } else {
+	@rsync = ("rsync", "-au", "--link-dest=../$last", "$src/", "$dest/$src/$now/");
+    }
+
+    push(@rsync, '-n') if $dry_run;
+    push(@rsync, '-v') if $verbose;
+
+    print "RSYNC: ", join(" ", @rsync), "\n" if $dry_run;
+
+    # rsync
+    print "Backing up $src...\n";
+    system(@rsync);
+}

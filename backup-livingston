@@ -1,0 +1,2 @@
+@backup = ("projects", "personal", "adawson", "work");
+@backup = map { "/home/memmett/" . $_ } @backup;
